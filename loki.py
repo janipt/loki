@@ -25,7 +25,7 @@ TEXT = {
     "fi": {
         "priorities": ["Hätätila", "Hälytys", "Kriittinen", "Virhe", "Varoitus", "Huomautus", "Tiedote", "Debug"],
         "headers": ["Aika", "Taso", "Lähde", "Viesti"],
-        "title": "Loki 0.4 | systemd-lokiselain",
+        "title": "Loki 0.4.1 | systemd-lokiselain",
         "language": "Kieli:", "finnish": "Suomi", "english": "English",
         "current_boot": "Nykyinen käynnistys", "previous_boot": "Edellinen käynnistys",
         "boot": "Käynnistys {offset}: {date}", "boot_label": "Käynnistys:", "severity": "Vakavuus:",
@@ -49,7 +49,7 @@ TEXT = {
     "en": {
         "priorities": ["Emergency", "Alert", "Critical", "Error", "Warning", "Notice", "Informational", "Debug"],
         "headers": ["Time", "Level", "Source", "Message"],
-        "title": "Loki 0.4 | systemd journal browser",
+        "title": "Loki 0.4.1 | systemd journal browser",
         "language": "Language:", "finnish": "Suomi", "english": "English",
         "current_boot": "Current boot", "previous_boot": "Previous boot",
         "boot": "Boot {offset}: {date}", "boot_label": "Boot:", "severity": "Severity:",
