@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Loki 0.3: install/uninstall KDE launcher for the current user only.
+"""Loki 0.4: install/uninstall KDE launcher for the current user only.
 
 No root access, external Python modules, or network access are needed by
 this installer. The Loki application itself requires PySide6 and journalctl.
@@ -15,7 +15,7 @@ import sys
 
 APP_ID = "loki-journal"
 APP_FILES = ("loki.py", "loki-journal.svg", "asennus.py", "README.txt")
-MARKER = "Loki 0.3 - oma käyttäjäasennus"
+MARKER = "Loki 0.4 - oma käyttäjäasennus"
 
 
 def paths():
@@ -81,17 +81,25 @@ def install():
                f"# {MARKER}\n"
                "Type=Application\n"
                "Name=Loki\n"
-               "GenericName=Journalin lokiselain\n"
-               "Comment=Selaa ja suodata systemd-journalin tapahtumia\n"
+               "Name[fi]=Loki\n"
+               "Name[en]=Loki\n"
+               "GenericName=Journal browser\n"
+               "GenericName[fi]=Journalin lokiselain\n"
+               "GenericName[en]=Journal browser\n"
+               "Comment=Browse and filter systemd journal events\n"
+               "Comment[fi]=Selaa ja suodata systemd-journalin tapahtumia\n"
+               "Comment[en]=Browse and filter systemd journal events\n"
                f"Exec={desktop_exec_argument(p['launcher'])}\n"
                f"Icon={p['icon']}\n"
                "Terminal=false\n"
                "StartupNotify=true\n"
                "Categories=System;Utility;\n"
-               "Keywords=lokit;virheet;systemd;journal;journalctl;kernel;logs;\n")
+               "Keywords=logs;errors;systemd;journal;journalctl;kernel;\n"
+               "Keywords[fi]=lokit;virheet;systemd;journal;journalctl;kernel;\n"
+               "Keywords[en]=logs;errors;systemd;journal;journalctl;kernel;\n")
     p["desktop"].write_text(desktop, encoding="utf-8")
     refresh_kde()
-    print("Loki 0.3 asennettu nykyiselle käyttäjälle. Root-oikeuksia ei käytetty.")
+    print("Loki 0.4 asennettu nykyiselle käyttäjälle. Root-oikeuksia ei käytetty.")
     print(f"Plasman sovellusvalikko: {p['desktop']}")
     print("Etsi sovellusvalikosta 'Loki' tai paina Meta ja kirjoita Loki.")
     print("Voit kiinnittää käynnissä olevan sovelluksen tehtäväpalkkiin.")
