@@ -40,6 +40,7 @@ TEXT = {
         "loading": "Luetaan journalia...", "read": "Luettu {count} riviä, näkyvissä {visible}. Uusimmat ensin.",
         "timing": "Haku {read:.0f} ms | JSON {parse:.0f} ms | UI {ui:.0f} ms | yhteensä {total:.0f} ms",
         "journal_error": "journalctl päättyi virhekoodiin {code}", "read_failed": "Lokin lukeminen epäonnistui",
+        "read_error": "Luettu {count} riviä, näkyvissä {visible}. Uusimmat ensin. | journalctl: {error}",
         "filter_status": "Näkyvissä {visible} / {total} riviä. Haku koskee ladattuja rivejä.",
         "save_dialog": "Tallenna näkyvät lokirivit", "text_files": "Tekstitiedostot (*.txt)",
         "save_failed": "Tallennus epäonnistui", "saved": "Tallennettu: {path}",
@@ -62,6 +63,7 @@ TEXT = {
         "loading": "Reading journal...", "read": "Read {count} rows, {visible} visible. Newest first.",
         "timing": "Query {read:.0f} ms | JSON {parse:.0f} ms | UI {ui:.0f} ms | total {total:.0f} ms",
         "journal_error": "journalctl exited with code {code}", "read_failed": "Failed to read the journal",
+        "read_error": "Read {count} rows, {visible} visible. Newest first. | journalctl: {error}",
         "filter_status": "Showing {visible} / {total} rows. Search covers loaded rows.",
         "save_dialog": "Save visible log rows", "text_files": "Text files (*.txt)",
         "save_failed": "Save failed", "saved": "Saved: {path}",
@@ -239,7 +241,10 @@ class Loki(QMainWindow):
         self._last_pulse = perf_counter()
         self._max_stall = 0.0
         self._load_started = 0.0
-        self._state = "loading"
+        self._metric_values = None
+        self._stall_delay = 0.0
+        self._status_key = "ready"
+        self._status_args = {}
 
         root = QWidget()
         layout = QVBoxLayout(root)
@@ -375,7 +380,9 @@ class Loki(QMainWindow):
         self.search.setPlaceholderText(self.tr("search_hint"))
         self.export_button.setText(self.tr("export"))
         self.detail.setPlaceholderText(self.tr("detail_hint"))
-        self.stall.setToolTip(self.tr("stall_tip"))
+        self.stall.setToolTip(self.tr("stall_detected") if self._stall_delay >= 0.3 else self.tr("stall_tip"))
+        self._render_stall()
+        self._render_metrics()
         self.model.language = self.language_code
         self.model.headerDataChanged.emit(Qt.Horizontal, 0, 3)
         if self.model.records:
@@ -384,14 +391,31 @@ class Loki(QMainWindow):
                 self.model.index(len(self.model.records) - 1, 1),
                 [Qt.DisplayRole],
             )
-        if self._refresh_pending:
-            self.status.setText(self.tr("refresh_pending"))
-        elif self._state == "loading":
-            self.status.setText(self.tr("loading"))
-        elif self._state == "loaded":
-            self._update_filter_status()
+        self._render_status()
+
+    def set_status(self, key, **args):
+        self._status_key = key
+        self._status_args = args
+        self._render_status()
+
+    def _render_status(self):
+        args = self._status_args.copy()
+        if "journal_code" in args:
+            args["error"] = self.tr("journal_error").format(code=args.pop("journal_code"))
+        self.status.setText(self.tr(self._status_key).format(**args))
+
+    def _render_metrics(self):
+        if self._metric_values is None:
+            self.metrics.setText("")
+            return
+        self.metrics.setText(self.tr("timing").format(**self._metric_values))
+
+    def _render_stall(self):
+        if self._stall_delay >= 0.3:
+            label = "UI delay" if self.language_code == "en" else "UI-viive"
+            self.stall.setText(f"{label}: {self._stall_delay:.1f} s")
         else:
-            self.status.setText(self.tr("ready"))
+            self.stall.setText(self.tr("ui_ok"))
 
     def change_language(self, *_):
         language = self.language.currentData()
@@ -422,8 +446,8 @@ class Loki(QMainWindow):
         if delay > self._max_stall:
             self._max_stall = delay
             if delay >= 0.3:
-                label = "UI delay" if self.language_code == "en" else "UI-viive"
-                self.stall.setText(f"{label}: {delay:.1f} s")
+                self._stall_delay = delay
+                self._render_stall()
                 self.stall.setToolTip(self.tr("stall_detected"))
 
     def refresh(self, *_):
@@ -431,15 +455,16 @@ class Loki(QMainWindow):
             return
         if self.worker is not None and self.worker.isRunning():
             self._refresh_pending = True
-            self.status.setText(self.tr("refresh_pending"))
+            self.set_status("refresh_pending")
             return
         self._refresh_pending = False
-        self._state = "loading"
         self._max_stall = 0.0
+        self._stall_delay = 0.0
         self._last_pulse = perf_counter()
-        self.stall.setText(self.tr("ui_ok"))
-        self.metrics.setText("")
-        self.status.setText(self.tr("loading"))
+        self._render_stall()
+        self._metric_values = None
+        self._render_metrics()
+        self.set_status("loading")
         self.refresh_button.setEnabled(False)
         self._load_started = perf_counter()
         selected_boot = self.boot.currentData()
@@ -454,25 +479,31 @@ class Loki(QMainWindow):
 
     def display(self, records, error, read_seconds, parse_seconds):
         start = perf_counter()
-        self._state = "loaded"
         self.detail.clear()
         self.model.set_records(records)
         # Keep existing search filter. Qt only paints the visible rows.
         self.proxy.set_term(self.search.text())
         display_seconds = perf_counter() - start
         self.refresh_button.setEnabled(True)
-        self.status.setText(self.tr("read").format(count=len(records), visible=self.proxy.rowCount()))
-        self.metrics.setText(self.tr("timing").format(
-            read=read_seconds * 1000, parse=parse_seconds * 1000, ui=display_seconds * 1000,
-            total=(perf_counter()-self._load_started) * 1000,
-        ))
+        self._metric_values = {
+            "read": read_seconds * 1000, "parse": parse_seconds * 1000,
+            "ui": display_seconds * 1000, "total": (perf_counter()-self._load_started) * 1000,
+        }
+        status_args = {"count": len(records), "visible": self.proxy.rowCount()}
+        self.set_status("read", **status_args)
+        self._render_metrics()
         if error:
+            journal_code = None
             if error.startswith("journalctl-exit:"):
-                error = self.tr("journal_error").format(code=error.partition(":")[2])
+                journal_code = error.partition(":")[2]
+                error = self.tr("journal_error").format(code=journal_code)
             if not records:
                 QMessageBox.warning(self, self.tr("read_failed"), error)
             else:
-                self.status.setText(self.status.text() + " | journalctl: " + error)
+                if journal_code is not None:
+                    self.set_status("read_error", **status_args, journal_code=journal_code)
+                else:
+                    self.set_status("read_error", **status_args, error=error)
 
     def worker_finished(self):
         if self._refresh_pending and not self._closing:
@@ -481,13 +512,7 @@ class Loki(QMainWindow):
 
     def filter_rows(self, *_):
         self.proxy.set_term(self.search.text())
-        self._state = "loaded"
-        self._update_filter_status()
-
-    def _update_filter_status(self):
-        self.status.setText(self.tr("filter_status").format(
-            visible=self.proxy.rowCount(), total=len(self.model.records),
-        ))
+        self.set_status("filter_status", visible=self.proxy.rowCount(), total=len(self.model.records))
 
     def show_detail(self, current, _previous):
         if not current.isValid():
@@ -514,7 +539,7 @@ class Loki(QMainWindow):
                     source = self.proxy.mapToSource(self.proxy.index(i, 0))
                     entry = self.model.records[source.row()]
                     file.write(f'{entry["time"]} [{entry["priority"]}] {entry["source"]}: {entry["message"]}\n')
-            self.status.setText(self.tr("saved").format(path=path))
+            self.set_status("saved", path=path)
         except OSError as exc:
             QMessageBox.critical(self, self.tr("save_failed"), str(exc))
 
@@ -525,7 +550,7 @@ class Loki(QMainWindow):
     def closeEvent(self, event):
         if any(t is not None and t.isRunning() for t in (self.worker, self.boot_worker)):
             self._closing = True
-            self.status.setText(self.tr("waiting_close"))
+            self.set_status("waiting_close")
             event.ignore()
             return
         event.accept()
