@@ -117,6 +117,10 @@ remove system journal entries or exported text files.
 Logs may contain personal or sensitive information. Review exported files
 before sharing them.
 
+### License
+
+Loki is released under the [MIT License](LICENSE). Copyright (c) 2026 janipt.
+
 ## Suomi
 
 Loki on vain luku -tilassa toimiva systemd-journalin selainsovellus. Se on
@@ -232,3 +236,7 @@ journal-merkintöjä tai vietyjä tekstitiedostoja.
 
 Lokit voivat sisältää henkilökohtaisia tai arkaluonteisia tietoja. Tarkista
 viedyt tiedostot ennen niiden jakamista.
+
+### Lisenssi
+
+Loki on julkaistu [MIT-lisenssillä](LICENSE). Tekijänoikeus (c) 2026 janipt.
