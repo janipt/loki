@@ -15,7 +15,7 @@ except ModuleNotFoundError:
     VERSION = None
 
 APP_ID = "loki-journal"
-APP_FILES = ("loki.py", "loki-journal.svg", "asennus.py", "README.md", "version.py")
+APP_FILES = ("loki.py", "loki-journal.svg", "asennus.py", "README.md", "version.py", "LICENSE")
 LEGACY_APP_FILES = ("README.txt",)
 MARKER = "Loki user installation"
 LEGACY_MARKERS = (
