@@ -1,4 +1,4 @@
-# Loki 0.4.2
+# Loki 0.4.3
 
 ## English
 
@@ -8,7 +8,7 @@ delete system logs.
 
 ### Screenshot
 
-![Loki 0.4.2 - English interface](docs/images/loki-en.png)
+![Loki - English interface](docs/images/loki-en.png)
 
 ### Features
 
