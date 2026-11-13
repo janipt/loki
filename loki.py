@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Loki 0.3: read-only journal browser for KDE / CachyOS.
+"""Read-only journal browser for KDE / CachyOS.
 
 Qt table model keeps data in Python instead of allocating a widget item for
 all four columns of every row. Both journal queries and boot enumeration run
@@ -13,6 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from time import perf_counter
 
+from version import VERSION
+
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, QLocale, QSettings, QSortFilterProxyModel, Qt, QThread, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -25,7 +27,7 @@ TEXT = {
     "fi": {
         "priorities": ["Hätätila", "Hälytys", "Kriittinen", "Virhe", "Varoitus", "Huomautus", "Tiedote", "Debug"],
         "headers": ["Aika", "Taso", "Lähde", "Viesti"],
-        "title": "Loki 0.4.1 | systemd-lokiselain",
+        "title": "Loki {version} | systemd-lokiselain",
         "language": "Kieli:", "finnish": "Suomi", "english": "English",
         "current_boot": "Nykyinen käynnistys", "previous_boot": "Edellinen käynnistys",
         "boot": "Käynnistys {offset}: {date}", "boot_label": "Käynnistys:", "severity": "Vakavuus:",
@@ -49,7 +51,7 @@ TEXT = {
     "en": {
         "priorities": ["Emergency", "Alert", "Critical", "Error", "Warning", "Notice", "Informational", "Debug"],
         "headers": ["Time", "Level", "Source", "Message"],
-        "title": "Loki 0.4.1 | systemd journal browser",
+        "title": "Loki {version} | systemd journal browser",
         "language": "Language:", "finnish": "Suomi", "english": "English",
         "current_boot": "Current boot", "previous_boot": "Previous boot",
         "boot": "Boot {offset}: {date}", "boot_label": "Boot:", "severity": "Severity:",
@@ -360,7 +362,7 @@ class Loki(QMainWindow):
         return TEXT[self.language_code][key]
 
     def retranslate_ui(self):
-        self.setWindowTitle(self.tr("title"))
+        self.setWindowTitle(self.tr("title").format(version=VERSION))
         self.boot_label.setText(self.tr("boot_label"))
         self.boot.setItemText(0, self.tr("current_boot"))
         self.boot.setItemText(1, self.tr("previous_boot"))
