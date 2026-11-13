@@ -124,10 +124,6 @@ suunnattu ensisijaisesti CachyOS + KDE Plasma 6 -ympäristöön. Loki lukee
 journal-merkinnät `journalctl`-komennolla eikä muokkaa tai poista järjestelmän
 lokeja.
 
-### Kuvakaappaus
-
-<!-- Lisää tähän aito Loki-kuvakaappaus, kun sellainen on saatavilla, esimerkiksi docs/images/loki.png. -->
-
 ### Ominaisuudet
 
 - Selaa nykyisen, edellisen tai muun journalin listaaman käynnistyskerran
