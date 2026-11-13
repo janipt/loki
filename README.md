@@ -8,7 +8,7 @@ delete system logs.
 
 ### Screenshot
 
-<!-- Add a real Loki screenshot here when one is available, for example at docs/images/loki.png. -->
+![Loki 0.4.2 - English interface](docs/images/loki-en.png)
 
 ### Features
 
